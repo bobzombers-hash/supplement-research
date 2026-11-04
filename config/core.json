@@ -1,0 +1,448 @@
+{
+  "_comment": "Add a supplement by appending an object to 'supplements'. 'search' is a PubMed query; the global 'design_filter' is ANDed onto it. 'outcomes' maps an outcome key to regex keywords used to label effect sizes found in text; 'analyze' lists outcomes to meta-analyze. 'unit_conversions' maps unit -> factor to the outcome's canonical unit. 'topic_patterns' (regex, case-insensitive) must match the title for an article to count as on-topic for effect extraction; 'title_exclude' drops articles whose title matches (e.g. IV magnesium sulfate). 'default_unit' lets an MD with no stated unit be read in that unit (only used for blood pressure). 'measures' lists the effect measures accepted for an outcome (others are ignored at extraction). 'analysis_require' (per outcome) lists regexes the snippet must match to be pooled (e.g. 'all-cause' for mortality); global 'analysis_exclude_snippet' / 'analysis_exclude_title' drop non-intervention comparisons (genotypes, patients vs healthy controls) at analysis time.",
+  "contact_email": "",
+  "ncbi_api_key": "",
+  "design_filter": "AND (randomized controlled trial[pt] OR meta-analysis[pt] OR systematic review[pt] OR meta-analysis[ti] OR \"systematic review\"[ti]) NOT (animals[mh] NOT humans[mh])",
+  "fulltext_max_per_supplement_per_run": 120,
+  "supplements": [
+    {
+      "key": "creatine",
+      "label": "Creatine",
+      "search": "(creatine[mh] OR creatine[tiab]) AND (supplement*[tiab] OR \"dietary supplements\"[mh] OR loading[tiab] OR monohydrate[tiab])",
+      "outcomes": {
+        "lean_mass": {
+          "label": "Lean / fat-free mass",
+          "patterns": [
+            "lean (body |tissue |soft tissue )?mass",
+            "fat[- ]free mass",
+            "\\bLBM\\b",
+            "\\bFFM\\b",
+            "muscle mass",
+            "lean tissue"
+          ],
+          "canonical_unit": "kg",
+          "unit_conversions": {
+            "kg": 1
+          },
+          "measures": [
+            "MD",
+            "SMD"
+          ]
+        },
+        "strength": {
+          "label": "Muscle strength",
+          "patterns": [
+            "strength",
+            "1[- ]?RM",
+            "one[- ]repetition maximum",
+            "bench press",
+            "leg press",
+            "squat",
+            "handgrip",
+            "hand[- ]grip",
+            "weight lifted",
+            "maximal weight",
+            "maximum weight",
+            "lifting performance",
+            "torque"
+          ],
+          "canonical_unit": "kg",
+          "unit_conversions": {
+            "kg": 1
+          },
+          "measures": [
+            "MD",
+            "SMD"
+          ]
+        },
+        "fat_mass": {
+          "label": "Fat mass / body fat",
+          "patterns": [
+            "fat mass",
+            "body fat",
+            "% ?fat"
+          ],
+          "canonical_unit": "kg",
+          "unit_conversions": {
+            "kg": 1
+          },
+          "measures": [
+            "MD",
+            "SMD"
+          ]
+        },
+        "cognition": {
+          "label": "Cognition / memory",
+          "patterns": [
+            "cogniti",
+            "memory"
+          ],
+          "canonical_unit": null,
+          "unit_conversions": {},
+          "measures": [
+            "MD",
+            "SMD"
+          ]
+        }
+      },
+      "analyze": [
+        "lean_mass",
+        "strength",
+        "fat_mass",
+        "cognition"
+      ],
+      "topic_patterns": [
+        "creatine(?!\\s*(?:phospho)?kinase)",
+        "creatine monohydrate"
+      ],
+      "title_exclude": [
+        "creatinine"
+      ]
+    },
+    {
+      "key": "magnesium",
+      "label": "Magnesium",
+      "search": "(magnesium[mh] OR \"magnesium compounds\"[mh] OR magnesium[tiab]) AND (supplement*[tiab] OR \"dietary supplements\"[mh] OR oral[tiab])",
+      "outcomes": {
+        "sbp": {
+          "label": "Systolic blood pressure",
+          "patterns": [
+            "systolic",
+            "\\bSBP\\b"
+          ],
+          "canonical_unit": "mmHg",
+          "unit_conversions": {
+            "mmHg": 1
+          },
+          "default_unit": "mmHg",
+          "measures": [
+            "MD",
+            "SMD"
+          ]
+        },
+        "dbp": {
+          "label": "Diastolic blood pressure",
+          "patterns": [
+            "diastolic",
+            "\\bDBP\\b"
+          ],
+          "canonical_unit": "mmHg",
+          "unit_conversions": {
+            "mmHg": 1
+          },
+          "default_unit": "mmHg",
+          "measures": [
+            "MD",
+            "SMD"
+          ]
+        },
+        "sleep": {
+          "label": "Sleep (quality / insomnia)",
+          "patterns": [
+            "sleep",
+            "insomnia",
+            "\\bPSQI\\b"
+          ],
+          "canonical_unit": null,
+          "unit_conversions": {},
+          "measures": [
+            "MD",
+            "SMD"
+          ]
+        },
+        "glucose": {
+          "label": "Fasting glucose",
+          "patterns": [
+            "fasting (plasma |blood |serum )?glucose",
+            "\\bFPG\\b",
+            "\\bFBG\\b"
+          ],
+          "canonical_unit": "mg/dL",
+          "unit_conversions": {
+            "mg/dL": 1,
+            "mmol/L": 18.016
+          },
+          "measures": [
+            "MD",
+            "SMD"
+          ]
+        },
+        "depression": {
+          "label": "Depression",
+          "patterns": [
+            "depress"
+          ],
+          "canonical_unit": null,
+          "unit_conversions": {},
+          "measures": [
+            "MD",
+            "SMD"
+          ]
+        }
+      },
+      "analyze": [
+        "sbp",
+        "dbp",
+        "sleep",
+        "glucose",
+        "depression"
+      ],
+      "topic_patterns": [
+        "magnesium",
+        "\\bMg\\b"
+      ],
+      "title_exclude": [
+        "magnesium sulfate",
+        "magnesium sulphate",
+        "MgSO4",
+        "intravenous",
+        "infusion",
+        "eclampsia"
+      ]
+    },
+    {
+      "key": "vitamin_d",
+      "label": "Vitamin D",
+      "search": "(\"vitamin d\"[mh] OR \"vitamin d\"[tiab] OR cholecalciferol[tiab] OR ergocalciferol[tiab]) AND (supplement*[tiab] OR \"dietary supplements\"[mh] OR administration[tiab] OR dose[tiab])",
+      "outcomes": {
+        "fracture": {
+          "label": "Fracture risk",
+          "patterns": [
+            "fracture"
+          ],
+          "canonical_unit": null,
+          "unit_conversions": {},
+          "measures": [
+            "RR",
+            "OR",
+            "HR"
+          ]
+        },
+        "serum_25ohd": {
+          "label": "Serum 25(OH)D",
+          "patterns": [
+            "25\\(OH\\)D",
+            "25-hydroxyvitamin D",
+            "25-?OHD",
+            "25\\(OH\\) ?vitamin D",
+            "serum vitamin D"
+          ],
+          "canonical_unit": "nmol/L",
+          "unit_conversions": {
+            "nmol/L": 1,
+            "ng/mL": 2.496,
+            "ng/ml": 2.496
+          },
+          "measures": [
+            "MD",
+            "SMD"
+          ]
+        },
+        "depression": {
+          "label": "Depression",
+          "patterns": [
+            "depress"
+          ],
+          "canonical_unit": null,
+          "unit_conversions": {},
+          "measures": [
+            "MD",
+            "SMD"
+          ]
+        },
+        "falls": {
+          "label": "Falls",
+          "patterns": [
+            "\\bfall(s|ing|ers)?\\b"
+          ],
+          "canonical_unit": null,
+          "unit_conversions": {},
+          "measures": [
+            "RR",
+            "OR",
+            "HR"
+          ]
+        },
+        "mortality": {
+          "label": "All-cause mortality",
+          "patterns": [
+            "mortality",
+            "death"
+          ],
+          "canonical_unit": null,
+          "unit_conversions": {},
+          "measures": [
+            "RR",
+            "OR",
+            "HR"
+          ],
+          "analysis_require": [
+            "all[- ]cause",
+            "total mortality",
+            "overall mortality",
+            "any cause"
+          ]
+        }
+      },
+      "analyze": [
+        "fracture",
+        "serum_25ohd",
+        "depression",
+        "falls",
+        "mortality"
+      ],
+      "topic_patterns": [
+        "vitamin D",
+        "cholecalciferol",
+        "ergocalciferol",
+        "calcifediol",
+        "calcidiol",
+        "\\bD3\\b"
+      ],
+      "title_exclude": [
+        "paricalcitol",
+        "calcitriol",
+        "alfacalcidol",
+        "doxercalciferol",
+        "analog"
+      ]
+    },
+    {
+      "key": "omega3",
+      "label": "Omega-3 (fish oil / EPA / DHA)",
+      "search": "(\"fatty acids, omega-3\"[mh] OR \"fish oils\"[mh] OR \"omega-3\"[tiab] OR \"n-3 fatty\"[tiab] OR \"fish oil\"[tiab] OR eicosapentaenoic[tiab] OR docosahexaenoic[tiab]) AND (supplement*[tiab] OR \"dietary supplements\"[mh] OR capsule*[tiab] OR oral[tiab])",
+      "outcomes": {
+        "triglycerides": {
+          "label": "Triglycerides",
+          "patterns": [
+            "triglyceride",
+            "triacylglycerol",
+            "\\bTGs?\\b"
+          ],
+          "canonical_unit": "mg/dL",
+          "unit_conversions": {
+            "mg/dL": 1,
+            "mmol/L": 88.57
+          },
+          "measures": [
+            "MD",
+            "SMD"
+          ]
+        },
+        "cv_events": {
+          "label": "Cardiovascular events",
+          "patterns": [
+            "cardiovascular (events?|disease|outcomes?)",
+            "major adverse cardi",
+            "\\bMACE\\b",
+            "myocardial infarction",
+            "coronary (heart disease|events?)",
+            "cardiac death",
+            "cardiovascular (death|mortality)"
+          ],
+          "canonical_unit": null,
+          "unit_conversions": {},
+          "measures": [
+            "RR",
+            "OR",
+            "HR"
+          ],
+          "analysis_require": [
+            "major adverse",
+            "MACE",
+            "cardiovascular (?:events?|disease|outcomes?|death|mortality)",
+            "coronary",
+            "myocardial infarction",
+            "cardiac (?:death|mortality)",
+            "sudden cardiac"
+          ]
+        },
+        "depression": {
+          "label": "Depression",
+          "patterns": [
+            "depress"
+          ],
+          "canonical_unit": null,
+          "unit_conversions": {},
+          "measures": [
+            "MD",
+            "SMD"
+          ]
+        },
+        "atrial_fibrillation": {
+          "label": "Atrial fibrillation",
+          "patterns": [
+            "atrial fibrillation",
+            "\\bAF\\b"
+          ],
+          "canonical_unit": null,
+          "unit_conversions": {},
+          "measures": [
+            "RR",
+            "OR",
+            "HR"
+          ]
+        },
+        "sbp": {
+          "label": "Systolic blood pressure",
+          "patterns": [
+            "systolic",
+            "\\bSBP\\b"
+          ],
+          "canonical_unit": "mmHg",
+          "unit_conversions": {
+            "mmHg": 1
+          },
+          "default_unit": "mmHg",
+          "measures": [
+            "MD",
+            "SMD"
+          ]
+        }
+      },
+      "analyze": [
+        "triglycerides",
+        "cv_events",
+        "depression",
+        "atrial_fibrillation",
+        "sbp"
+      ],
+      "topic_patterns": [
+        "omega-3",
+        "omega 3",
+        "\\bn-3\\b",
+        "\\b\u03c9-3",
+        "fish oil",
+        "\\bEPA\\b",
+        "\\bDHA\\b",
+        "eicosapentaenoic",
+        "docosahexaenoic",
+        "icosapent",
+        "krill oil",
+        "marine oil",
+        "PUFA"
+      ],
+      "title_exclude": []
+    }
+  ],
+  "analysis_exclude_snippet": [
+    "polymorph",
+    "genotype",
+    "allele",
+    "patients than",
+    "than (?:in )?(?:healthy )?controls",
+    "healthy controls",
+    "observational",
+    "case-control",
+    "hormone therapy",
+    "\\bHT\\b",
+    "(?:lower|higher|reduced|decreased) (?:serum |circulating )?(?:vitamin D|25\\(OH\\)D)(?: levels?)? (?:levels? )?(?:in|among|of) [^.;]{0,40}(?:patients|subjects|cases)"
+  ],
+  "analysis_exclude_title": [
+    "polymorphism",
+    "receptor gene",
+    "genotype",
+    "levels in .* patients",
+    "deficiency in .* patients"
+  ]
+}

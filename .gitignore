@@ -1,0 +1,31 @@
+# environments
+.venv/
+venv/
+__pycache__/
+*.pyc
+.mplconfig/
+
+# runtime state
+logs/*
+!logs/.keep
+*.lock
+*.lock.info
+.scheduler
+settings.json
+
+# data (stored as the db-latest release asset, not in git)
+data/*
+!data/.keep
+dist/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.db.gz
+*.part
+
+# generated dashboard (deployed to GitHub Pages)
+output/
+
+.DS_Store
+Thumbs.db

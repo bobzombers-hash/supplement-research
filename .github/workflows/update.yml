@@ -1,0 +1,120 @@
+name: Weekly update
+
+on:
+  schedule:
+    - cron: "0 16 * * 1"   # Mondays 16:00 UTC (08:00 PST / 09:00 PDT)
+  workflow_dispatch:
+    inputs:
+      expand:
+        description: "Catalog supplements to add this cycle"
+        required: false
+        default: "5"
+      time_budget_min:
+        description: "Wall-clock budget for the cycle in minutes (job limit is 6 h)"
+        required: false
+        default: "300"
+
+permissions: {}
+
+concurrency:
+  group: weekly-update
+  cancel-in-progress: false
+
+env:
+  DB_TAG: db-latest
+  DB_ASSET: research.db.gz
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
+    permissions:
+      contents: write   # upload the database to the db-latest release
+    outputs:
+      cycle_ok: ${{ steps.cycle.outputs.ok }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --default-timeout 60 -r requirements.txt
+
+      - name: Restore database from release ${{ env.DB_TAG }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p data dist
+          gh release download "$DB_TAG" --repo "$GITHUB_REPOSITORY" --pattern "$DB_ASSET" --dir dist
+          python tools/db_store.py unpack "dist/$DB_ASSET" data/research.db
+          cp "dist/$DB_ASSET" dist/research.prev.db.gz   # last week's copy, kept as a rollback asset
+
+      - name: Run one update cycle
+        id: cycle
+        env:
+          NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}           # optional; raises NCBI rate limit 3 -> 10 req/s
+          SUPP_CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}       # optional repository variable
+          EXPAND: ${{ inputs.expand || '5' }}
+          BUDGET: ${{ inputs.time_budget_min || '300' }}
+        run: |
+          set +e
+          python run.py --no-notify --expand "$EXPAND" --time-budget-min "$BUDGET"
+          rc=$?
+          set -e
+          echo "ok=$([ "$rc" = 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          if [ "$rc" != 0 ]; then echo "::warning::update cycle finished with rc=$rc (partial update; see the update-log artifact)"; fi
+          test -f output/index.html || { echo "::error::no dashboard was produced"; exit 1; }
+          {
+            echo "## Supplement research update"
+            echo
+            echo "Cycle rc=$rc"
+            echo '```json'
+            python run.py --status
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save database to release ${{ env.DB_TAG }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python tools/db_store.py pack data/research.db "dist/$DB_ASSET"
+          gh release upload "$DB_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
+            "dist/$DB_ASSET" "dist/$DB_ASSET.sha256" dist/research.prev.db.gz
+
+      - name: Upload log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: update-log
+          path: logs/
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: output/
+
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

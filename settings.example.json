@@ -1,0 +1,11 @@
+{
+  "_comment": "Copy to settings.json (install.sh does this) and edit. Env vars NCBI_API_KEY / SUPP_CONTACT_EMAIL override the first two.",
+  "ncbi_api_key": "",
+  "contact_email": "",
+  "interval_days": 7,
+  "retry_hours": 6,
+  "expansion_per_run": 5,
+  "fulltext_max_per_supplement_per_run": 120,
+  "fulltext_time_budget_minutes": 90,
+  "notify": true
+}
